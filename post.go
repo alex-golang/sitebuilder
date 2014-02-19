@@ -46,8 +46,6 @@ type Post struct {
 	Keywords    []string
 	Tags        []string
 	Content     []byte
-	InFile      string
-	OutFile     string
 	RelPath     string
 	Title       string
 	Author      string
@@ -116,9 +114,9 @@ func GeneratePosts(path string, templ *template.Template) TagList {
 // save writes templated post data to the appropriate file.
 func (p *Post) save(path string, templ *template.Template) {
 	// Determine output file name.
-	p.OutFile = uniqueFilename(p.Title, p.Date)
-	p.RelPath = strings.Join([]string{"", PostsDir, p.OutFile}, "/")
-	dst := filepath.Join(path, p.OutFile)
+	out := uniqueFilename(p.Title, p.Date)
+	p.RelPath = strings.Join([]string{"", PostsDir, out}, "/")
+	dst := filepath.Join(path, out)
 
 	// Ensure output directory exists.
 	err := os.MkdirAll(dst, DirPermission)
@@ -227,8 +225,6 @@ func (p *Post) RenderKeywords() string {
 
 // Load loads post data from the given file.
 func (p *Post) Load(file string) error {
-	p.InFile = file
-
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err

@@ -13,6 +13,7 @@ func main() {
 	path, debug := parseArgs()
 
 	templates := LoadTemplates(path)
+
 	tags := GeneratePosts(path, templates)
 	tags.Generate(path, templates)
 
