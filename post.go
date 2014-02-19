@@ -5,10 +5,12 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -25,8 +27,19 @@ var (
 	DefaultTags     = []string{}
 	DefaultKeywords = []string{}
 
-	endmeta = []byte("$endmeta")
+	endmeta  = []byte("$endmeta")
+	reg_name = regexp.MustCompile(`[^a-zA-Z0-9-_]`)
 )
+
+// PostIndex represents the post index page.
+type PostIndex struct {
+	Keywords    []string
+	Title       string
+	Description template.HTMLAttr
+	Lang        template.HTMLAttr
+	Dir         template.HTMLAttr
+	Posts       []*Post
+}
 
 // Post represents a single document/post.
 type Post struct {
@@ -35,11 +48,12 @@ type Post struct {
 	Content     []byte
 	InFile      string
 	OutFile     string
+	RelPath     string
 	Title       string
-	Description string
 	Author      string
-	Lang        string
-	Dir         string
+	Description template.HTMLAttr
+	Lang        template.HTMLAttr
+	Dir         template.HTMLAttr
 	Date        time.Time
 }
 
@@ -49,14 +63,106 @@ func NewPost() *Post {
 	p.Date = time.Now()
 	p.Tags = DefaultTags
 	p.Keywords = DefaultKeywords
-	p.Lang = DefaultLang
-	p.Dir = DefaultDir
+	p.Lang = template.HTMLAttr(DefaultLang)
+	p.Dir = template.HTMLAttr(DefaultDir)
 	return p
+}
+
+// GeneratePosts generates all posts.
+// It returns a mapping of all unique tags found in the posts.
+func GeneratePosts(path string, templ *template.Template) TagList {
+	tags := NewTagList()
+	posts := readPosts(path)
+
+	dst := filepath.Join(path, DeployDir)
+	dst = filepath.Join(dst, PostsDir)
+
+	err := os.MkdirAll(dst, DirPermission)
+	test(err, "Generate posts")
+
+	page := &PostIndex{
+		Title:       "Listing of all posts",
+		Description: template.HTMLAttr("Listing of all posts"),
+		Lang:        template.HTMLAttr(DefaultLang),
+		Dir:         template.HTMLAttr(DefaultDir),
+	}
+
+	for post := range posts {
+		post.save(dst, templ)
+
+		// Update tag mapping.
+		for _, tag := range post.Tags {
+			tags.Add(tag, post)
+		}
+
+		// Update post index.
+		page.Posts = append(page.Posts, post)
+	}
+
+	// Generate post index.
+	dst = filepath.Join(dst, "index.html")
+	fd, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, FilePermission)
+	test(err, "Generate post index")
+
+	defer fd.Close()
+
+	PostsByDate(page.Posts).Sort()
+
+	err = templ.ExecuteTemplate(fd, "postindex.html", page)
+	test(err, "Generate post index")
+	return tags
+}
+
+// save writes templated post data to the appropriate file.
+func (p *Post) save(path string, templ *template.Template) {
+	// Determine output file name.
+	p.OutFile = uniqueFilename(p.Title, p.Date)
+	p.RelPath = strings.Join([]string{"", PostsDir, p.OutFile}, "/")
+	dst := filepath.Join(path, p.OutFile)
+
+	// Ensure output directory exists.
+	err := os.MkdirAll(dst, DirPermission)
+	test(err, "Generate post")
+
+	// Prepare output buffer.
+	dst = filepath.Join(dst, "index.html")
+	fd, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, FilePermission)
+	test(err, "Generate post")
+
+	defer fd.Close()
+
+	// Run post thruogh template.
+	err = templ.ExecuteTemplate(fd, "post.html", p)
+	test(err, "Generate post")
+}
+
+// uniqueFilename creates a unique file name from the
+// given name and post date. The date component will contain
+// the year, month, day, hour and minute:
+//
+//    <title>-<yyyymmddhhmm>.html
+//
+// The uniqueness is therefore only guaranteed up to the point
+// where no two posts with the exact same title are made in the same
+// minute.
+func uniqueFilename(name string, date time.Time) string {
+	name = strings.ToLower(name)
+	name = strings.TrimSpace(name)
+	name = strings.Replace(name, " ", "-", -1)
+	name = reg_name.ReplaceAllString(name, "")
+	name = fmt.Sprintf("%s-%s", name, date.Format("200601021504"))
+
+	// remove duplicate --
+	for strings.Index(name, "--") > -1 {
+		name = strings.Replace(name, "--", "-", -1)
+	}
+
+	return name
 }
 
 // ReadPosts traverses the given directory and its children
 // and returns each post as it is found through the returned channel.
-func ReadPosts(root string) <-chan *Post {
+func readPosts(root string) <-chan *Post {
 	c := make(chan *Post)
 
 	go func() {
@@ -90,7 +196,7 @@ func ReadPosts(root string) <-chan *Post {
 
 // RenderDate renders the date in a readable format.
 func (p *Post) RenderDate() string {
-	return p.Date.Format(TimeFormat)
+	return p.Date.UTC().Format(TimeFormat)
 }
 
 // RenderContent renders the content in a readable format.
@@ -99,8 +205,19 @@ func (p *Post) RenderContent() template.HTML {
 }
 
 // RenderTags renders tags in a readable format.
-func (p *Post) RenderTags() string {
-	return strings.Join(p.Tags, ", ")
+func (p *Post) RenderTags() template.HTML {
+	if len(p.Tags) == 0 {
+		return ""
+	}
+
+	out := make([]string, len(p.Tags))
+
+	for i, v := range p.Tags {
+		out[i] = fmt.Sprintf(`<a href="/tag/%s">%s</a>`,
+			template.HTMLEscapeString(v), template.HTMLEscapeString(v))
+	}
+
+	return template.HTML(strings.Join(out, ", "))
 }
 
 // RenderKeywords renders tags in a readable format.
@@ -129,7 +246,7 @@ func (p *Post) Load(file string) error {
 		}
 	}
 
-	if len(p.Title) != 0 {
+	if len(p.Title) == 0 {
 		_, p.Title = filepath.Split(file)
 	}
 
@@ -149,15 +266,15 @@ func (p *Post) parseMeta(data []byte) error {
 	section := ini.Section("")
 
 	p.Title = section.S("title", p.Title)
-	p.Description = section.S("description", p.Description)
 	p.Author = section.S("author", p.Author)
-	p.Lang = section.S("lang", p.Lang)
-	p.Dir = section.S("dir", p.Dir)
+	p.Description = template.HTMLAttr(section.S("description", string(p.Description)))
+	p.Lang = template.HTMLAttr(section.S("lang", string(p.Lang)))
+	p.Dir = template.HTMLAttr(section.S("dir", string(p.Dir)))
 
 	p.Tags = toList(section.S("tags", strings.Join(p.Tags, ", ")))
 	p.Keywords = toList(section.S("keywords", strings.Join(p.Keywords, ", ")))
 
-	p.Date, err = time.Parse(TimeFormat, section.S("postdates", ""))
+	p.Date, err = time.Parse(TimeFormat, section.S("postdate", ""))
 	if err != nil {
 		p.Date = time.Now()
 	}

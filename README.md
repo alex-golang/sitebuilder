@@ -8,9 +8,14 @@ This directory holds the site contents in a specific layout:
 
     [$path]
       |- [posts]
-      |   |-[...]
+      |   |- a.md
+      |   |- b.md
+      |   |- ...
       |
       |- [static]
+      |   |-[css]
+      |   |-[js]
+      |   |-[img]
       |   |-[...]
       |
       |- [templates]
@@ -22,9 +27,11 @@ This directory holds the site contents in a specific layout:
   The directory structure inside this dir can be anything you want.
 * **static**: This directory holds static content which shoul be included
   in the site as-is. This includes things like images, stylesheets,
-  javascripts, etc.
+  javascripts, etc. The contents of this directory (including sub directories)
+  is copied over 1:1.
 * **templates**: This directory holds a set of templates, with syntax compatible
-  with Go's `html/template` package.
+  with Go's `html/template` package. These are used to generate the actual
+  site pages.
 
 
 ### Usage

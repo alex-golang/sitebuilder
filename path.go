@@ -9,6 +9,17 @@ import (
 	"strings"
 )
 
+const (
+	FilePermission = 0644
+	DirPermission  = 0744
+)
+
+var (
+	DeployDir = "deploy"
+	PostsDir  = "post"
+	TagsDir   = "tag"
+)
+
 // ValidatePath ensures the given path is valid.
 // This means it exists, and contains a few expected sub directories.
 func ValidatePath(path string) string {
@@ -21,12 +32,7 @@ func ValidatePath(path string) string {
 	validateDir(path, "templates")
 
 	// Delete existing deploy directory.
-	dir := filepath.Join(path, "deploy")
-	err = os.RemoveAll(dir)
-	test(err, "Create deploy directory")
-
-	// Create fresh deploy directory.
-	err = os.MkdirAll(dir, 0744)
+	err = os.RemoveAll(filepath.Join(path, DeployDir))
 	test(err, "Create deploy directory")
 	return path
 }

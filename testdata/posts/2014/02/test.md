@@ -1,10 +1,8 @@
-title = Test post
+title = Test post & Cake
 description = Some sample post to test sitebuilder's behaviour
 author = Jim Teeuwen
 postdate = 2014-02-19 11:52 UTC
 tags = misc
-lang = en,en-GB
-dir = ltr
 $endmeta
 
 This is the post content.

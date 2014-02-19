@@ -11,11 +11,12 @@ import (
 
 func main() {
 	path, debug := parseArgs()
-	templates := LoadTemplates(path)
-	posts := ReadPosts(path)
 
-	_ = posts
-	_ = templates
+	templates := LoadTemplates(path)
+	tags := GeneratePosts(path, templates)
+	tags.Generate(path, templates)
+
+	CopyStatic(path)
 
 	if debug {
 		return

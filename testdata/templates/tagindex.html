@@ -1,0 +1,19 @@
+{{template "header.html" . }}
+
+<article>
+ <header>
+  <h2>Listing of all tags</h2>
+ </header>
+ <main>
+  <ul>
+   {{range .Tags}}
+    <li>
+     <a href="/tag/{{.Name}}">{{.Name}}</a>
+     &nbsp;{{.PostCount}} post(s).
+    </li>
+   {{end}}
+  </ul>
+ </main>
+</article>
+
+{{template "footer.html" . }}
