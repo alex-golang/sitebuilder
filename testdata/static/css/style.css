@@ -11,9 +11,8 @@ html, body {
  font-family: 'Goudy Bookletter 1911', 'Georgia', serif;
  font-size: 1em;
  margin: 0;
- padding: 10px;
- padding-left: 30px;
- padding-right: 30px;
+ padding: 20px;
+ padding-top: 10px;
  background-color: #fff;
  color: #111;
 }
@@ -71,6 +70,10 @@ blockquote {
 article footer {
  padding: 5px;
  text-align: left;
+}
+
+header {
+ padding-bottom: 20px;
 }
 
 footer {

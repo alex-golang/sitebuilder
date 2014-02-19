@@ -1,9 +1,6 @@
 {{template "header.html" . }}
 
 <article>
- <header>
-  <h2>Listing of posts</h2>
- </header>
  <main>
   <ul>
    {{range .Posts}}
@@ -11,7 +8,6 @@
      <a href="{{.RelPath}}" title="{{.Description}}">{{.Title}}</a>
      &nbsp;@&nbsp;{{.RenderDate}}
      <p class="tiny">{{.Description}}</p>
-     <p class="tiny">Tags: {{.RenderTags}}</p>
     </li>
    {{end}}
   </ul>
