@@ -1,5 +1,30 @@
 ## sitebuild
 
+Sitebuild is a simple static website generator.
+It comes as a single command line tool, which accepts
+the path to a target directory as an argument.
+
+This directory holds the site contents in a specific layout:
+
+    [$path]
+      |- [posts]
+      |   |-[...]
+      |
+      |- [static]
+      |   |-[...]
+      |
+      |- [templates]
+          |- foo.html
+          |- bar.html
+          |- baz.html
+
+* **posts**: contains the actual post contents as Markdown (`.md`) files.
+  The directory structure inside this dir can be anything you want.
+* **static**: This directory holds static content which shoul be included
+  in the site as-is. This includes things like images, stylesheets,
+  javascripts, etc.
+* **templates**: This directory holds a set of templates, with syntax compatible
+  with Go's `html/template` package.
 
 
 ### Usage
