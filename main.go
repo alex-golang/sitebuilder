@@ -24,6 +24,9 @@ func main() {
 	err = WriteTags(site)
 	check(err)
 
+	err = WriteIndex(site)
+	check(err)
+
 	err = CopyStatic(site)
 	check(err)
 

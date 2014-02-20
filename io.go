@@ -5,10 +5,49 @@ package main
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/jteeuwen/blackfriday"
 )
+
+// WriteIndex writes the front page.
+// This is a special version of a normal Post.
+func WriteIndex(site *Site) error {
+	path := filepath.Join(site.Root, "index.md")
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	post := NewPost()
+
+	// Check if we have meta data.
+	data, _, err = post.ReadMetadata(data)
+	if err != nil {
+		return err
+	}
+
+	// Parse content as markdown.
+	post.Content = blackfriday.MarkdownCommon(data)
+
+	// Generate output.
+	path = filepath.Join(site.Root, "deploy")
+	path = filepath.Join(path, "index.html")
+
+	page := NewPostPage(post)
+
+	fd, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, FilePermission)
+	if err != nil {
+		return err
+	}
+
+	defer fd.Close()
+
+	return site.Render(fd, "index.html", page)
+}
 
 // WriteTags generates tag documents.
 // These contain listings for all posts referencing a given tag.

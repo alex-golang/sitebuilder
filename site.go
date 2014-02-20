@@ -140,7 +140,7 @@ func (s *Site) loadPosts() error {
 	})
 }
 
-// Load loads post data from the given file.
+// loadPost loads post data from the given file.
 // This also loads unique tags.
 func (s *Site) loadPost(file string) error {
 	// Read post data from file.

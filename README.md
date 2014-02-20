@@ -10,6 +10,7 @@ the path to a target directory as an argument.
 This directory holds the site contents in a specific layout:
 
     [$path]
+      |- index.md
       |- [posts]
       |   |- a.md
       |   |- b.md
@@ -26,7 +27,10 @@ This directory holds the site contents in a specific layout:
           |- bar.html
           |- baz.html
 
-* **posts**: contains the actual post contents as Markdown (`.md`) files.
+* **index.md**: This is a special page which serves as the front page
+  of the website. It follows the same layout rules as all documents in
+  the `posts` directory.
+* **posts**: Contains the actual post contents as Markdown (`.md`) files.
   The directory structure inside this dir can be anything you want.
 * **static**: This directory holds static content which shoul be included
   in the site as-is. This includes things like images, stylesheets,
