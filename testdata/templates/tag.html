@@ -1,0 +1,23 @@
+{{template "header.html" . }}
+
+<article>
+ <header>
+  <h2>Posts for tag: {{.Tag}}</h2>
+ </header>
+ <main>
+  <ul>
+   {{$page := . }}
+   {{range .Posts .Tag}}
+    {{$post := . }}
+    {{with $page}}
+    <li>
+     <a href="{{.PostPath $post}}">{{.PostTitle $post}}</a>
+     <p class="tiny">{{.PostDate $post}} -- {{.PostDescription $post}}</p>
+    </li>
+    {{end}}
+   {{end}}
+  </ul>
+ </main>
+</article>
+
+{{template "footer.html" . }}

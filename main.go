@@ -12,12 +12,20 @@ import (
 func main() {
 	path, debug := parseArgs()
 
-	templates := LoadTemplates(path)
+	path, err := ValidatePath(path)
+	check(err)
 
-	tags := GeneratePosts(path, templates)
-	tags.Generate(path, templates)
+	site, err := LoadSite(path)
+	check(err)
 
-	CopyStatic(path)
+	err = WritePosts(site)
+	check(err)
+
+	err = WriteTags(site)
+	check(err)
+
+	err = CopyStatic(site)
+	check(err)
 
 	if debug {
 		return
@@ -31,9 +39,9 @@ func parseArgs() (string, bool) {
 
 	version := flag.Bool("version", false, "")
 	debug := flag.Bool("debug", false, "")
-	tags := flag.String("tags", "", "")
-	keywords := flag.String("keywords", "", "")
 
+	flag.StringVar(&DefaultTags, "tags", "", "")
+	flag.StringVar(&DefaultKeywords, "keywords", "", "")
 	flag.StringVar(&DefaultLang, "lang", DefaultLang, "")
 	flag.StringVar(&DefaultDir, "dir", DefaultDir, "")
 	flag.Parse()
@@ -50,11 +58,6 @@ func parseArgs() (string, bool) {
 	} else {
 		path = flag.Arg(0)
 	}
-
-	path = ValidatePath(path)
-
-	DefaultTags = toList(*tags)
-	DefaultKeywords = toList(*keywords)
 
 	return path, *debug
 }

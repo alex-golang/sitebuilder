@@ -10,7 +10,7 @@ import (
 
 const (
 	AppName         = "sitebuild"
-	AppVersionMajor = 0
+	AppVersionMajor = 1
 	AppVersionMinor = 1
 )
 

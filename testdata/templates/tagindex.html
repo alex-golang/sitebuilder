@@ -1,0 +1,17 @@
+{{template "header.html" . }}
+
+<article>
+ <header>
+  <h2>Listing of tags</h2>
+ </header>
+ <main>
+  <ul>
+   {{$page := .}}
+   {{range .Tags}}{{$tag := .}}{{with $page}}
+    <li><a href="/tags/{{$tag}}">{{$tag}}</a> {{.PostCount $tag}}{{end}} post(s).</li>
+   {{end}}
+  </ul>
+ </main>
+</article>
+
+{{template "footer.html" . }}

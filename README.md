@@ -1,6 +1,9 @@
 ## sitebuild
 
 Sitebuild is a simple static website generator.
+It exists mostly for my own use, as it is employed to generate
+the contents for my personal website.
+
 It comes as a single command line tool, which accepts
 the path to a target directory as an argument.
 

@@ -10,43 +10,73 @@ import (
 )
 
 const (
+	// FilePermission defines permissions for generated files.
 	FilePermission = 0644
-	DirPermission  = 0744
-)
 
-var (
-	DeployDir = "deploy"
-	PostsDir  = "post"
-	TagsDir   = "tag"
+	// DirPermission defines permissions for generated directories.
+	DirPermission = 0744
 )
 
 // ValidatePath ensures the given path is valid.
 // This means it exists, and contains a few expected sub directories.
-func ValidatePath(path string) string {
+//
+// It returns the absolute version of the path or an error.
+func ValidatePath(path string) (string, error) {
 	path, err := filepath.Abs(path)
-	test(err, "Invalid path")
+	if err != nil {
+		return "", err
+	}
 
-	validateDir(path)
-	validateDir(path, "posts")
-	validateDir(path, "static")
-	validateDir(path, "templates")
+	err = dirExists(path)
+	if err != nil {
+		return "", err
+	}
+
+	err = dirExists(path, "posts")
+	if err != nil {
+		return "", err
+	}
+
+	err = dirExists(path, "static")
+	if err != nil {
+		return "", err
+	}
+
+	err = dirExists(path, "templates")
+	if err != nil {
+		return "", err
+	}
 
 	// Delete existing deploy directory.
-	err = os.RemoveAll(filepath.Join(path, DeployDir))
-	test(err, "Create deploy directory")
-	return path
+	deploy := filepath.Join(path, "deploy")
+	err = os.RemoveAll(deploy)
+	if err != nil {
+		return "", err
+	}
+
+	// Create new posts directory.
+	err = os.MkdirAll(filepath.Join(deploy, "posts"), DirPermission)
+	if err != nil {
+		return "", err
+	}
+
+	// Create new tags directory.
+	return path, os.MkdirAll(filepath.Join(deploy, "tags"), DirPermission)
 }
 
-// validateDir ensures the given path exists and that
+// dirExists ensures the given path exists and that
 // it is a directory.
-func validateDir(paths ...string) {
+func dirExists(paths ...string) error {
 	path := strings.Join(paths, string(filepath.Separator))
 
 	stat, err := os.Lstat(path)
-	test(err, "Invalid path")
-
-	// ...and that it is a directory.
-	if !stat.IsDir() {
-		fatal("Path is not a directory.")
+	if err != nil {
+		return err
 	}
+
+	if !stat.IsDir() {
+		return newError("Path is not a directory.")
+	}
+
+	return nil
 }
