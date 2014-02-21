@@ -7,10 +7,21 @@ import (
 	"html/template"
 )
 
+type PostIndexEntry struct {
+	Title       template.HTML
+	Description template.HTMLAttr
+	Path        template.HTMLAttr
+}
+
+type PostIndex struct {
+	Year  int
+	Posts []*PostIndexEntry
+}
+
 // PostIndexPage represents a page, displaying all posts.
 type PostIndexPage struct {
 	*Page
-	site *Site
+	Years []*PostIndex
 }
 
 // NewPostIndexPage returns a new PostIndexPage for the given site.
@@ -20,35 +31,36 @@ func NewPostIndexPage(site *Site) *PostIndexPage {
 	p.Page.title = "Listing of posts"
 	p.Page.description = p.Page.title
 	p.Page.keywords = "posts, archive, history, index"
-	p.site = site
+
+	if len(site.Posts) == 0 {
+		return p
+	}
+
+	p.Years = make([]*PostIndex, 0, len(site.Posts))
+
+	PostsByDate(site.Posts).Sort()
+
+	for _, post := range site.Posts {
+		index := p.getIndex(post.Date.Year())
+
+		index.Posts = append(index.Posts, &PostIndexEntry{
+			Title:       template.HTML(post.Title),
+			Description: template.HTMLAttr(post.Description),
+			Path:        template.HTMLAttr(post.Path),
+		})
+	}
+
 	return p
 }
 
-func (p *PostIndexPage) Posts() []*Post {
-	PostsByDate(p.site.Posts).Sort()
-	return p.site.Posts
-}
+func (p *PostIndexPage) getIndex(year int) *PostIndex {
+	for _, index := range p.Years {
+		if index.Year == year {
+			return index
+		}
+	}
 
-func (p *PostIndexPage) PostDate(post *Post) string {
-	return post.Date.Format(DateFormat)
-}
-
-func (p *PostIndexPage) PostDescription(post *Post) template.HTMLAttr {
-	return template.HTMLAttr(post.Description)
-}
-
-func (p *PostIndexPage) PostTitle(post *Post) template.HTML {
-	return template.HTML(post.Title)
-}
-
-func (p *PostIndexPage) PostPath(post *Post) template.HTMLAttr {
-	return template.HTMLAttr(post.Path)
-}
-
-func (p *PostIndexPage) PostHasTags(post *Post) bool {
-	return len(p.site.FindTags(post)) > 0
-}
-
-func (p *PostIndexPage) PostTags(post *Post) template.HTML {
-	return RenderTags(p.site.FindTags(post))
+	index := &PostIndex{Year: year}
+	p.Years = append(p.Years, index)
+	return index
 }
