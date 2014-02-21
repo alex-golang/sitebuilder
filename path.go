@@ -14,7 +14,7 @@ const (
 	FilePermission = 0644
 
 	// DirPermission defines permissions for generated directories.
-	DirPermission = 0744
+	DirPermission = 0755
 )
 
 // ValidatePath ensures the given path is valid.
